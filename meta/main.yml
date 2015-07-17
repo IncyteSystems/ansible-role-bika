@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: ""
+  company: ""
+  license: BSD
+  min_ansible_version: 1.9
+  platforms:
+   - name: Ubuntu
+     versions:
+      - precise
+      - quantal
+      - raring
+      - saucy
+  categories: []
+
+dependencies:
+  - { role: bika_server_setup, tags: [plone_bika_server_setup] }
+#  - { role: plone_server, tags: [plone_server] }
