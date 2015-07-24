@@ -1,3 +1,4 @@
 ---
 plone_backup_path: /var/local/plone-{{ plone_major_version }}/backup
 always_checkout: true
+inventory_name_alphanumeric: "{{ inventory_hostname | regex_replace('[^a-zA-Z0-9]', '_') }}"

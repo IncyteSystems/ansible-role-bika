@@ -15,4 +15,4 @@ galaxy_info:
 
 dependencies:
   - { role: bika_server_setup, tags: [plone_bika_server_setup] }
-#  - { role: plone_server, tags: [plone_server] }
+  - { role: plone_server, tags: [plone_server] }

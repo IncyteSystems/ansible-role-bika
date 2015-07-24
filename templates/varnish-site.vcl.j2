@@ -1,0 +1,35 @@
+{% for client in range(1, plone_client_count + 1) %}
+backend {{ inventory_name_alphanumeric }}_zeoclient{{ client }} {
+    .host = "127.0.0.1";
+    .port = "{{ '%s'%(plone_client_base_port|int + loop.index-1) }}";
+    .connect_timeout = 10s;
+    .first_byte_timeout = 900s;
+    .between_bytes_timeout = 900s;
+    .max_connections = 30;
+    .probe = {
+      .url = "/{{ plone_site_id }}/misc_/CMFPlone/site_icon.png";
+      .interval = 5s;
+      .timeout = 3s;
+      .window = 5;
+      .threshold = 2;
+      .initial = 1;
+    }
+}
+
+{% endfor %}
+
+director {{ inventory_name_alphanumeric }}_director client {
+{% for client in range(1, plone_client_count + 1) %}
+        { .backend = {{ inventory_name_alphanumeric }}_zeoclient{{ client }}; .weight = 5; }
+{% endfor %}
+}
+
+sub vcl_recv {
+    if (req.http.host ~ "^{{ inventory_name_alphanumeric }}$")  { set req.backend = {{ inventory_name_alphanumeric }}_director; }
+}
+
+# store in cache only by url, not backend host
+sub vcl_hash {
+  hash_data(req.url);
+  return (hash);
+}

@@ -1,0 +1,62 @@
+---
+- name: Ensure always-checkout = true
+  lineinfile:
+    dest="{{ plone_target_path }}/{{ plone_instance_name }}/buildout.cfg"
+    insertafter="^auto-checkout.*"
+    line="always-checkout = {{ always_checkout }}"
+  tags:
+    - plone
+
+- name: ensure that var/zeoserver exists
+  file:
+    path={{ plone_var_path }}/{{ plone_instance_name }}/zeoserver
+    state=directory
+
+# add passwd just in case
+- name: Ensure that admin user is created
+  command: bin/client_reserved adduser admin {{ plone_initial_password }}
+  args:
+    chdir: "{{ plone_target_path }}/{{ plone_instance_name }}"
+  sudo_user: plone_daemon
+  tags:
+    - plone
+
+### nginx site #############################################################
+
+- name: Add to sites-available
+  template:
+    src=nginx-site.conf.j2
+    dest=/etc/nginx/sites-available/{{ inventory_hostname }}.conf
+  notify: restart nginx
+  tags:
+    - nginx
+
+- name: Add to sites-enabled
+  file:
+    src=/etc/nginx/sites-available/{{ inventory_hostname }}.conf
+    dest=/etc/nginx/sites-enabled/{{ inventory_hostname }}.conf
+    state=link
+  notify: restart nginx
+  tags:
+    - nginx
+
+### varnish site ###########################################################
+
+- name: Add varnish site configuration
+  template:
+    src=varnish-site.vcl.j2
+    dest=/etc/varnish/sites/{{ inventory_hostname }}.vcl
+  notify: restart varnish
+  tags:
+    - varnish
+
+- name: add site include to sites.vcl
+  lineinfile:
+    dest=/etc/varnish/sites.vcl
+    regexp='.*{{ inventory_hostname }}.*'
+    insertbefore=BOF
+    line='include "/etc/varnish/sites/{{ inventory_hostname }}.vcl";'
+  tags:
+    - varnish
+
+
